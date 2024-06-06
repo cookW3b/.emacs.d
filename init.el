@@ -7,6 +7,7 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (setq make-backup-files nil)
+(setq auto-save-default nil)
 
 (package-initialize)
 
@@ -24,13 +25,17 @@
 (global-set-key (kbd "C-c b k") 'kill-current-buffer)
 (global-set-key (kbd "C-c s") 'shell-command)
 (global-set-key (kbd "C-c b i") 'ibuffer)
+(global-set-key (kbd "C-c t t") 'vterm-toggle)
+
+(add-hook 'typescript-ts-mode-hook 'flymake-mode)
 
 (set-face-attribute 'default nil
-                    :font "BlexMono Nerd Font"
-                    :height 150
-                    ;; :weight 'normal
+                    :font "monospace"
+                    :height 170
+                    :weight 'normal
                     :inverse-video nil
                     :slant 'normal)
+
 
 (load-theme 'oxocarbon)
 (set-frame-parameter nil 'alpha-background 100)
@@ -53,12 +58,21 @@
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
      (json "https://github.com/tree-sitter/tree-sitter-json")
      (make "https://github.com/alemuller/tree-sitter-make")
+     (vue "https://github.com/ikatyang/tree-sitter-vue")
      (markdown "https://github.com/ikatyang/tree-sitter-markdown")
      (python "https://github.com/tree-sitter/tree-sitter-python")
      (toml "https://github.com/tree-sitter/tree-sitter-toml")
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+
+;; (use-package tide
+;;   :ensure t
+;;   :after (company flycheck)
+;;   :hook ((typescript-ts-mode . tide-setup)
+;;          (tsx-ts-mode . tide-setup)
+;;          (typescript-ts-mode . tide-hl-identifier-mode)
+;;          (before-save . tide-format-before-save)))
 
 (use-package dashboard
 	;; :ensure nil
@@ -69,7 +83,10 @@
 	:bind ("C-;" . er/expand-region))
 
 (use-package flymake-cspell
-	:hook(c-ts-mode . flymake-cspell-setup))
+	:hook(
+				(c-ts-mode . flymake-cspell-setup)
+				(typescript-ts-mode . flymake-cspell-setup)
+				))
 
 (use-package ibuffer-projectile)
 (add-hook 'ibuffer-hook
@@ -94,7 +111,11 @@
   :init
 	(setq-default lsp-headerline-breadcrumb-enable nil)
 	(setq lsp-keymap-prefix "C-c l")
-  :hook (c-ts-mode . lsp))
+  :hook (
+				 (c-ts-mode . lsp)
+				 (typescript-ts-mode . lsp)
+         (js-json-mode . lsp)
+				 ))
 
 (use-package evil
 ;;	:ensure nil
@@ -109,6 +130,8 @@
 ;;	:ensure nil
   :init
   (add-hook 'prog-mode-hook #'yas-minor-mode))
+
+(use-package yasnippet-snippets)
 
 (use-package beacon
 ;;	:ensure nil
@@ -315,13 +338,18 @@
       (append '(("\\.cpp\\'" . c-ts-mode)
 								("\\.hpp\\'" . c-ts-mode)
 								("\\.c\\'" . c-ts-mode)
-								("\\.h\\'" . c-ts-mode))
+								("\\.h\\'" . c-ts-mode)
+								("\\.js'" . typescript-ts-mode)
+								("\\.ts'" . typescript-ts-mode)
+								("\\.mjs'" . typescript-ts-mode)
+								("\\.es6'" . typescript-ts-mode))
 							auto-mode-alist))
 
 (add-to-list 'major-mode-remap-alist '(c++-ts-mode . c-ts-mode))
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
 (add-to-list 'major-mode-remap-alist
              '(c-or-c++-ts-mode . c-ts-mode))
+(add-to-list 'major-mode-remap-alist '(javascript-mode . typescript-ts-mode))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -331,15 +359,18 @@
  '(c-basic-offset 2)
  '(c-ts-mode-indent-style 'linux)
  '(custom-safe-themes
-	 '("b9826aa465617d413b4ae3ad4048b954e2104c570afac22083fdb9632221bb38" "ba5a4f070f3a6223af79e6661a77992245d474a35ecfa0aabd2010e42cf45149" "2c7fe375db3c3ab9fd26634edba5829e40b8ab6a872e082f5ac739abdfe28a92" "ccacbbcf2d5acff1d4274cb8e45200b0d29fcd4af996c240d71f95e750f74197" "d02e8b60e485333a848d301bf2ad07994b0501d46eaa687a7303c44a5626521c" "f490984d405f1a97418a92f478218b8e4bcc188cf353e5dd5d5acd2f8efd0790" "2d035eb93f92384d11f18ed00930e5cc9964281915689fa035719cab71766a15" "35c096aa0975d104688a9e59e28860f5af6bb4459fd692ed47557727848e6dfe" "28a104f642d09d3e5c62ce3464ea2c143b9130167282ea97ddcc3607b381823f" "5efa59da0b446dd939749e86fdf414ef2b666f80243999633d9e2e4fd22fd37c" "317754d03bb6d85b5a598480e1bbee211335bbf496d441af4992bbf1e777579e" "f5f80dd6588e59cfc3ce2f11568ff8296717a938edd448a947f9823a4e282b66" "ffafb0e9f63935183713b204c11d22225008559fa62133a69848835f4f4a758c" "aa688776604bbddbaba9e0c0d77e8eb5f88d94308f223d1962b6e6b902add6a0" "9d5124bef86c2348d7d4774ca384ae7b6027ff7f6eb3c401378e298ce605f83a" "f64189544da6f16bab285747d04a92bd57c7e7813d8c24c30f382f087d460a33" "93011fe35859772a6766df8a4be817add8bfe105246173206478a0706f88b33d" "7ec8fd456c0c117c99e3a3b16aaf09ed3fb91879f6601b1ea0eeaee9c6def5d9" "063095cf0fe6ed3990546ec77e5d3798a1e2ad5043350063467a71c69518bb24" "263e3a9286c7ab0c4f57f5d537033c8a5943e69d142e747723181ab9b12a5855" "702d0136433ca65a7aaf7cc8366bd75e983fe02f6e572233230a528f25516f7e" "841b6a0350ae5029d6410d27cc036b9f35d3bf657de1c08af0b7cbe3974d19ac" "f1b2de4bc88d1120782b0417fe97f97cc9ac7c5798282087d4d1d9290e3193bb" "691d671429fa6c6d73098fc6ff05d4a14a323ea0a18787daeb93fde0e48ab18b" "7c28419e963b04bf7ad14f3d8f6655c078de75e4944843ef9522dbecfcd8717d" "9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14" "e27c9668d7eddf75373fa6b07475ae2d6892185f07ebed037eedf783318761d7" "c1d5759fcb18b20fd95357dcd63ff90780283b14023422765d531330a3d3cec2" "4b6cc3b60871e2f4f9a026a5c86df27905fb1b0e96277ff18a76a39ca53b82e1" "2078837f21ac3b0cc84167306fa1058e3199bbd12b6d5b56e3777a4125ff6851" "456697e914823ee45365b843c89fbc79191fdbaff471b29aad9dcbe0ee1d5641" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "77fff78cc13a2ff41ad0a8ba2f09e8efd3c7e16be20725606c095f9a19c24d3d" "aec7b55f2a13307a55517fdf08438863d694550565dee23181d2ebd973ebd6b8" "014cb63097fc7dbda3edf53eb09802237961cbb4c9e9abd705f23b86511b0a69" "0c83e0b50946e39e237769ad368a08f2cd1c854ccbcd1a01d39fdce4d6f86478" "2721b06afaf1769ef63f942bf3e977f208f517b187f2526f0e57c1bd4a000350" "b5fd9c7429d52190235f2383e47d340d7ff769f141cd8f9e7a4629a81abc6b19" "10e5d4cc0f67ed5cafac0f4252093d2119ee8b8cb449e7053273453c1a1eb7cc" "34cf3305b35e3a8132a0b1bdf2c67623bc2cb05b125f8d7d26bd51fd16d547ec" "4ade6b630ba8cbab10703b27fd05bb43aaf8a3e5ba8c2dc1ea4a2de5f8d45882" "13096a9a6e75c7330c1bc500f30a8f4407bd618431c94aeab55c9855731a95e1" "8d3ef5ff6273f2a552152c7febc40eabca26bae05bd12bc85062e2dc224cde9a" "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" "8c7e832be864674c220f9a9361c851917a93f921fedb7717b1b5ece47690c098" "81f53ee9ddd3f8559f94c127c9327d578e264c574cda7c6d9daddaec226f87bb" "7e377879cbd60c66b88e51fad480b3ab18d60847f31c435f15f5df18bdb18184" "4594d6b9753691142f02e67b8eb0fda7d12f6cc9f1299a49b819312d6addad1d" "5f128efd37c6a87cd4ad8e8b7f2afaba425425524a68133ac0efd87291d05874" "d19f00fe59f122656f096abbc97f5ba70d489ff731d9fa9437bac2622aaa8b89" "d77d6ba33442dd3121b44e20af28f1fae8eeda413b2c3d3b9f1315fbda021992" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" default))
+   '("3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558" "e851241d1926c2f4383201b0826076578ca18f72f58281dd15a7cc7f3d2381df" "96ca43d04079c6f4273f65174d52de6c6443f98cc745da5284242ca3733dba95" "00010488d151611d5657ad62d1ef0f25ca6354ddb09afe43918076e78c89301f" "b25b7cde93ca3acfb5b0ad92ff49fcde910eafe6f2589bea941a6f9ba71676d4" "b9826aa465617d413b4ae3ad4048b954e2104c570afac22083fdb9632221bb38" "ba5a4f070f3a6223af79e6661a77992245d474a35ecfa0aabd2010e42cf45149" "2c7fe375db3c3ab9fd26634edba5829e40b8ab6a872e082f5ac739abdfe28a92" "ccacbbcf2d5acff1d4274cb8e45200b0d29fcd4af996c240d71f95e750f74197" "d02e8b60e485333a848d301bf2ad07994b0501d46eaa687a7303c44a5626521c" "f490984d405f1a97418a92f478218b8e4bcc188cf353e5dd5d5acd2f8efd0790" "2d035eb93f92384d11f18ed00930e5cc9964281915689fa035719cab71766a15" "35c096aa0975d104688a9e59e28860f5af6bb4459fd692ed47557727848e6dfe" "28a104f642d09d3e5c62ce3464ea2c143b9130167282ea97ddcc3607b381823f" "5efa59da0b446dd939749e86fdf414ef2b666f80243999633d9e2e4fd22fd37c" "317754d03bb6d85b5a598480e1bbee211335bbf496d441af4992bbf1e777579e" "f5f80dd6588e59cfc3ce2f11568ff8296717a938edd448a947f9823a4e282b66" "ffafb0e9f63935183713b204c11d22225008559fa62133a69848835f4f4a758c" "aa688776604bbddbaba9e0c0d77e8eb5f88d94308f223d1962b6e6b902add6a0" "9d5124bef86c2348d7d4774ca384ae7b6027ff7f6eb3c401378e298ce605f83a" "f64189544da6f16bab285747d04a92bd57c7e7813d8c24c30f382f087d460a33" "93011fe35859772a6766df8a4be817add8bfe105246173206478a0706f88b33d" "7ec8fd456c0c117c99e3a3b16aaf09ed3fb91879f6601b1ea0eeaee9c6def5d9" "063095cf0fe6ed3990546ec77e5d3798a1e2ad5043350063467a71c69518bb24" "263e3a9286c7ab0c4f57f5d537033c8a5943e69d142e747723181ab9b12a5855" "702d0136433ca65a7aaf7cc8366bd75e983fe02f6e572233230a528f25516f7e" "841b6a0350ae5029d6410d27cc036b9f35d3bf657de1c08af0b7cbe3974d19ac" "f1b2de4bc88d1120782b0417fe97f97cc9ac7c5798282087d4d1d9290e3193bb" "691d671429fa6c6d73098fc6ff05d4a14a323ea0a18787daeb93fde0e48ab18b" "7c28419e963b04bf7ad14f3d8f6655c078de75e4944843ef9522dbecfcd8717d" "9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14" "e27c9668d7eddf75373fa6b07475ae2d6892185f07ebed037eedf783318761d7" "c1d5759fcb18b20fd95357dcd63ff90780283b14023422765d531330a3d3cec2" "4b6cc3b60871e2f4f9a026a5c86df27905fb1b0e96277ff18a76a39ca53b82e1" "2078837f21ac3b0cc84167306fa1058e3199bbd12b6d5b56e3777a4125ff6851" "456697e914823ee45365b843c89fbc79191fdbaff471b29aad9dcbe0ee1d5641" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "77fff78cc13a2ff41ad0a8ba2f09e8efd3c7e16be20725606c095f9a19c24d3d" "aec7b55f2a13307a55517fdf08438863d694550565dee23181d2ebd973ebd6b8" "014cb63097fc7dbda3edf53eb09802237961cbb4c9e9abd705f23b86511b0a69" "0c83e0b50946e39e237769ad368a08f2cd1c854ccbcd1a01d39fdce4d6f86478" "2721b06afaf1769ef63f942bf3e977f208f517b187f2526f0e57c1bd4a000350" "b5fd9c7429d52190235f2383e47d340d7ff769f141cd8f9e7a4629a81abc6b19" "10e5d4cc0f67ed5cafac0f4252093d2119ee8b8cb449e7053273453c1a1eb7cc" "34cf3305b35e3a8132a0b1bdf2c67623bc2cb05b125f8d7d26bd51fd16d547ec" "4ade6b630ba8cbab10703b27fd05bb43aaf8a3e5ba8c2dc1ea4a2de5f8d45882" "13096a9a6e75c7330c1bc500f30a8f4407bd618431c94aeab55c9855731a95e1" "8d3ef5ff6273f2a552152c7febc40eabca26bae05bd12bc85062e2dc224cde9a" "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" "8c7e832be864674c220f9a9361c851917a93f921fedb7717b1b5ece47690c098" "81f53ee9ddd3f8559f94c127c9327d578e264c574cda7c6d9daddaec226f87bb" "7e377879cbd60c66b88e51fad480b3ab18d60847f31c435f15f5df18bdb18184" "4594d6b9753691142f02e67b8eb0fda7d12f6cc9f1299a49b819312d6addad1d" "5f128efd37c6a87cd4ad8e8b7f2afaba425425524a68133ac0efd87291d05874" "d19f00fe59f122656f096abbc97f5ba70d489ff731d9fa9437bac2622aaa8b89" "d77d6ba33442dd3121b44e20af28f1fae8eeda413b2c3d3b9f1315fbda021992" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" default))
  '(desktop-save-mode nil)
  '(display-line-numbers 'relative)
  '(display-line-numbers-type 'visual)
  '(electric-indent-mode nil)
  '(evil-auto-indent nil)
  '(fill-column 80)
+ '(indent-tabs-mode nil)
+ '(js-indent-level 2)
+ '(lsp-completion-provider :none)
  '(package-selected-packages
-	 '(rainbow-mode autothemer poet-theme flymake-cspell expand-region ef-themes multiple-cursors ibuffer-projectile ensure-packages dashboard gruber-darker-theme which-key evil dirvish vterm beacon projectile yasnippet company vertico consult use-package doom-themes hc-zenburn-theme catppuccin-theme atom-one-dark-theme lsp-mode))
+   '(vue-mode flymake vterm-toggle tide yasnippet-snippets rainbow-mode autothemer poet-theme flymake-cspell expand-region ef-themes multiple-cursors ibuffer-projectile ensure-packages dashboard gruber-darker-theme which-key evil dirvish vterm beacon projectile yasnippet company vertico consult use-package doom-themes hc-zenburn-theme catppuccin-theme atom-one-dark-theme lsp-mode))
  '(recentf-mode t)
  '(tab-bar-mode nil)
  '(tab-width 2)
